@@ -272,7 +272,7 @@ predicted_labels, clusters = assign_to_nearest_centroid(solution1_eval_data_scal
 # print("Predicted labels shape:", predicted_labels.shape)
 # print("Predicted labels:", predicted_labels)
 
-# Calculate purity
+# Calculate purityy
 calculate_purity(clusters, solution1_ground_truth)
 calculate_F_measure(clusters, solution1_ground_truth)
 calculate_entropy(clusters, solution1_ground_truth)
