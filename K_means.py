@@ -345,17 +345,13 @@ def tabulate(total_f_measure, Precisions, Recalls, F_measure, entropy, Entropies
     df.loc['Total'] = [entropy]
     print(df)
 
-def Silhouette():
-    i = 0
+def Silhouette(data):
     for k in k_values:
-        initial_centroids = Initial_centroids[i]
-        i = i + 1
-        k_labels, centroids = kmeans(k, initial_centroids)
+        centroids,_ = kmeans(data, k)
         kmeans_model = KMeans(n_clusters=k, init=centroids, n_init=1)
         visualizer = SilhouetteVisualizer(kmeans_model, colors='yellowbrick')
         visualizer.fit(solution1_train_data_scaled)
         visualizer.show()
-    Initial_centroids.clear()
 def plot_results(k_values, Sol1F_measure, Sol2F_measure, Sol1Entropy, Sol2Entropy, label, y1, y2):
     import matplotlib.pyplot as plt
 
@@ -382,30 +378,30 @@ train_data, train_labels, eval_data, eval_labels = load_data_split(folder_path)
 solution1_train_data_scaled, solution1_eval_data_scaled, solution1_ground_truth_test, solution1_ground_truth_train = prepareData_Sol1(
     train_data,
     eval_data)
-solution2_train_data_pca, solution2_eval_data_pca, solution2_ground_truth_test, solution2_ground_truth_train = prepareData_Sol2(
-    train_data, eval_data)
+# solution2_train_data_pca, solution2_eval_data_pca, solution2_ground_truth_test, solution2_ground_truth_train = prepareData_Sol2(
+#     train_data, eval_data)
 print("Solution 1:")
-for k in k_values:
-    print("K: ", k)
-    Sol1_for_k(solution1_train_data_scaled, solution1_eval_data_scaled, solution1_ground_truth_test,
-               solution1_ground_truth_train, k)
-Silhouette()
+# for k in k_values:
+#     print("K: ", k)
+#     Sol1_for_k(solution1_train_data_scaled, solution1_eval_data_scaled, solution1_ground_truth_test,
+#                solution1_ground_truth_train, k)
+Silhouette(solution1_train_data_scaled)
 print("Solution 2:")
-for k in k_values:
-    print("K: ", k)
-    Sol2_for_k(solution2_train_data_pca, solution2_eval_data_pca, solution2_ground_truth_test,
-               solution2_ground_truth_train, k)
-plot_results(k_values, Sol1_Precisions_test, Sol2_Precisions_test, Sol1_Recalls_test, Sol2_Recalls_test, "Evaluation "
-                                                                                                         "Data",
-             "Precision", "Recall")
-plot_results(k_values, Sol1_Precisions_train, Sol2_Precisions_train, Sol1_Recalls_train, Sol2_Recalls_train,
-             "Training Data", "Precision", "Recall")
-plot_results(k_values, Sol1F_measure_test, Sol2F_measure_test, Sol1Entropy_test, Sol2Entropy_test, "Evaluation Data",
-             "F-measure", "Entropy")
-plot_results(k_values, Sol1F_measure_train, Sol2F_measure_train, Sol1Entropy_train, Sol2Entropy_train, "Training Data",
-             "F-measure", "Entropy")
+# for k in k_values:
+#     print("K: ", k)
+#     Sol2_for_k(solution2_train_data_pca, solution2_eval_data_pca, solution2_ground_truth_test,
+#                solution2_ground_truth_train, k)
+# plot_results(k_values, Sol1_Precisions_test, Sol2_Precisions_test, Sol1_Recalls_test, Sol2_Recalls_test, "Evaluation "
+#                                                                                                          "Data",
+#              "Precision", "Recall")
+# plot_results(k_values, Sol1_Precisions_train, Sol2_Precisions_train, Sol1_Recalls_train, Sol2_Recalls_train,
+#              "Training Data", "Precision", "Recall")
+# plot_results(k_values, Sol1F_measure_test, Sol2F_measure_test, Sol1Entropy_test, Sol2Entropy_test, "Evaluation Data",
+#              "F-measure", "Entropy")
+# plot_results(k_values, Sol1F_measure_train, Sol2F_measure_train, Sol1Entropy_train, Sol2Entropy_train, "Training Data",
+#              "F-measure", "Entropy")
 
-Silhouette()
+# Silhouette(solution2_train_data_pca)
 ###
 
 
