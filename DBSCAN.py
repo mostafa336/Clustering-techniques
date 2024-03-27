@@ -8,7 +8,6 @@ from sklearn.metrics.cluster import contingency_matrix
 from sklearn.preprocessing import StandardScaler
 from collections import Counter
 
-EVAL_DATA_SIZE = 1824
 
 
 def load_data_split(folder_path, segments_per_subject=60, segments_for_training=48):
@@ -80,6 +79,13 @@ def expand_cluster(data, point_index, neighbors, cluster_id, eps, min_samples, v
         if cluster_labels[neighbor] == -1:
             cluster_labels[neighbor] = cluster_id
 
+def calculate_cluster_purity(cluster_labels, cluster, true_labels):
+    cluster_indices = np.where(cluster_labels == cluster)[0]
+    true_labels_in_cluster = true_labels[cluster_indices]
+    cluster_size = len(cluster_indices)
+    label_counts = Counter(true_labels_in_cluster)
+    majority_label_count = max(label_counts.values())
+    return majority_label_count
 
 def calculate_purity(cluster_labels, true_labels):
     clusters = np.unique(cluster_labels)
@@ -90,15 +96,9 @@ def calculate_purity(cluster_labels, true_labels):
         if cluster == -1:  # Skip noise points
             continue
 
-        cluster_indices = np.where(cluster_labels == cluster)[0]
-        true_labels_in_cluster = true_labels[cluster_indices]
-        cluster_size = len(cluster_indices)
-        label_counts = Counter(true_labels_in_cluster)
-        majority_label_count = max(label_counts.values())
-        cluster_purity = majority_label_count
+        cluster_purity = calculate_cluster_purity(cluster_labels, cluster, true_labels)
         total_purity += cluster_purity
 
-        # print(f"Cluster {cluster}: Purity = {cluster_purity:.2f}")
 
     overall_purity = total_purity / total_samples
     return overall_purity
@@ -124,12 +124,14 @@ def cond_entropy(cluster_labels, true_labels):
 
     return cond_entropy
 
+
 def calculate_recall(cluster_labels, true_labels):
     clusters = np.unique(cluster_labels)
     total_true_positive = 0
     total_false_negative = 0
 
-    frequency = np.zeros((len(cluster_labels), 19))
+    # compute false negative
+    num_labels = np.zeros((len(clusters), 19))
     for i, cluster in enumerate(clusters):
         if cluster == -1:
             continue
@@ -138,7 +140,15 @@ def calculate_recall(cluster_labels, true_labels):
         for label in true_labels_in_cluster:
             if label < 1:
                 continue
-            frequency[i][label-1] += 1
+            num_labels[i][label - 1] += 1
+
+    # loop for each label
+    for j in range(0, 19):
+        # loop for each cluster
+        for i in range(0, len(clusters)):
+            # check clusters below it
+            for k in range(i + 1, len(clusters)):
+                total_false_negative = num_labels[i][j] * num_labels[k][j]
 
     for cluster in clusters:
         if cluster == -1:  # Skip noise points
@@ -148,16 +158,39 @@ def calculate_recall(cluster_labels, true_labels):
         true_labels_in_cluster = true_labels[cluster_indices]
         label_counts = Counter(true_labels_in_cluster)
 
-        # Calculate true positives and false negatives
+        # Calculate true positives
         if len(label_counts) > 0:
             majority_label = max(label_counts, key=label_counts.get)
             true_positive = label_counts[majority_label]
-            false_negative = len(true_labels_in_cluster) - true_positive # fix it
             total_true_positive += true_positive
-            total_false_negative += false_negative
 
     recall = total_true_positive / (total_true_positive + total_false_negative)
-    return recall
+
+    return recall, num_labels
+
+def calculate_F_measure(cluster_labels, true_labels):
+    f_measure_sum = 0
+    _, number_labels = calculate_recall(cluster_labels, true_labels)
+    sum_of_labels = np.sum(number_labels, axis=0)
+    print("sum of labels : ", sum_of_labels)
+    for i, cluster_label in enumerate(np.unique(cluster_labels)):
+        # precision
+        precision = calculate_cluster_purity(cluster_labels, cluster_label, true_labels)
+        # recall
+        cluster_indices = np.where(cluster_labels == cluster_label)[0]
+        true_labels_in_cluster = true_labels[cluster_indices]
+        label_counts = Counter(true_labels_in_cluster)
+        majority_label = max(label_counts, key=label_counts.get)
+        cnt_major = label_counts[majority_label-1]
+        if sum_of_labels[majority_label-1] == 0:
+            continue
+        recall = cnt_major / sum_of_labels[majority_label-1]
+
+        if precision + recall != 0:
+            f_measure = (2 * precision * recall) / (precision + recall)
+            f_measure_sum += f_measure
+    f_measure_avg = f_measure_sum / len(np.unique(cluster_labels))
+    return f_measure_avg
 
 
 folder_path = "data"
@@ -180,10 +213,14 @@ min_samples = 1
 
 # evaluation data solution1
 test_cluster_labels = dbscan(solution1_eval_data_scaled, eps, min_samples)
-purity1 = calculate_purity(test_cluster_labels, eval_labels)
-recall1 = calculate_recall(test_cluster_labels, eval_labels)
-cond1 = cond_entropy(test_cluster_labels, eval_labels)
-print("test sol 1\npurity: ", purity1, "\nrecall: ", recall1, "\ncond", cond1)
+print("NUmber of Clusters : ", len(np.unique(test_cluster_labels)))
+# purity1 = calculate_purity(test_cluster_labels, eval_labels)
+recall1, _ = calculate_recall(test_cluster_labels, eval_labels)
+print("recall : ", recall1)
+F1 = calculate_F_measure(test_cluster_labels, eval_labels)
+print("test f measure : ", F1)
+# cond1 = cond_entropy(test_cluster_labels, eval_labels)
+# print("test sol 1\npurity: ", purity1, "\nrecall: ", recall1, "\ncond", cond1)
 
 # # Solution 2 train data
 # solution2_train_data = train_data.reshape(train_data.shape[0], -1)

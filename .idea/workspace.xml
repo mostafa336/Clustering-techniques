@@ -5,8 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bac9061b-8eac-47e0-8ccf-6994b920fc5f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/DBSCAN.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/K means.py" beforeDir="false" afterPath="$PROJECT_DIR$/K_means.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/Clustering-techniques.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Clustering-techniques.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DBSCAN.py" beforeDir="false" afterPath="$PROJECT_DIR$/DBSCAN.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,6 +27,9 @@
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="ProjectErrors" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
