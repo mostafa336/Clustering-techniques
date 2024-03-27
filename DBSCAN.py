@@ -7,7 +7,8 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, normalized_mutu
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.preprocessing import StandardScaler
 from collections import Counter
-
+from sklearn.metrics import silhouette_score
+from sklearn.model_selection import ParameterGrid
 
 
 def load_data_split(folder_path, segments_per_subject=60, segments_for_training=48):
@@ -42,6 +43,7 @@ def find_neighbors(data, point_index, eps):
     for i, other_point in enumerate(data):
         if i != point_index and euclidean_distance(data[point_index], other_point) <= eps:
             neighbors.append(i)
+
     return neighbors
 
 
@@ -99,7 +101,6 @@ def calculate_purity(cluster_labels, true_labels):
         cluster_purity = calculate_cluster_purity(cluster_labels, cluster, true_labels)
         total_purity += cluster_purity
 
-
     overall_purity = total_purity / total_samples
     return overall_purity
 
@@ -129,7 +130,6 @@ def calculate_recall(cluster_labels, true_labels):
     clusters = np.unique(cluster_labels)
     total_true_positive = 0
     total_false_negative = 0
-
     # compute false negative
     num_labels = np.zeros((len(clusters), 19))
     for i, cluster in enumerate(clusters):
@@ -138,18 +138,18 @@ def calculate_recall(cluster_labels, true_labels):
         cluster_indices = np.where(cluster_labels == cluster)[0]
         true_labels_in_cluster = true_labels[cluster_indices]
         for label in true_labels_in_cluster:
-            if label < 1:
-                continue
             num_labels[i][label - 1] += 1
 
     # loop for each label
     for j in range(0, 19):
         # loop for each cluster
-        for i in range(0, len(clusters)):
+        for i in range(1, len(clusters)):
             # check clusters below it
             for k in range(i + 1, len(clusters)):
-                total_false_negative = num_labels[i][j] * num_labels[k][j]
+                total_false_negative += num_labels[i][j] * num_labels[k][j]
 
+    recall_per_cluster = np.zeros(len(clusters))
+    sum_of_labels = np.sum(num_labels, axis=0)
     for cluster in clusters:
         if cluster == -1:  # Skip noise points
             continue
@@ -157,37 +157,40 @@ def calculate_recall(cluster_labels, true_labels):
         cluster_indices = np.where(cluster_labels == cluster)[0]
         true_labels_in_cluster = true_labels[cluster_indices]
         label_counts = Counter(true_labels_in_cluster)
+        for label in label_counts:
+            total_true_positive += label_counts[label] * (label_counts[label] -1)
 
-        # Calculate true positives
         if len(label_counts) > 0:
             majority_label = max(label_counts, key=label_counts.get)
-            true_positive = label_counts[majority_label]
-            total_true_positive += true_positive
+            recall_per_cluster[cluster] = label_counts[majority_label]
+            recall_per_cluster[cluster] = recall_per_cluster[cluster] / 96
 
     recall = total_true_positive / (total_true_positive + total_false_negative)
 
-    return recall, num_labels
+    return recall, num_labels, recall_per_cluster
+
 
 def calculate_F_measure(cluster_labels, true_labels):
     f_measure_sum = 0
-    _, number_labels = calculate_recall(cluster_labels, true_labels)
+    _, number_labels, recall = calculate_recall(cluster_labels, true_labels)
     sum_of_labels = np.sum(number_labels, axis=0)
-    print("sum of labels : ", sum_of_labels)
+    print("sum of labels: ", sum_of_labels)
+    print("sum ", np.sum(sum_of_labels))
     for i, cluster_label in enumerate(np.unique(cluster_labels)):
         # precision
         precision = calculate_cluster_purity(cluster_labels, cluster_label, true_labels)
         # recall
-        cluster_indices = np.where(cluster_labels == cluster_label)[0]
-        true_labels_in_cluster = true_labels[cluster_indices]
-        label_counts = Counter(true_labels_in_cluster)
-        majority_label = max(label_counts, key=label_counts.get)
-        cnt_major = label_counts[majority_label-1]
-        if sum_of_labels[majority_label-1] == 0:
-            continue
-        recall = cnt_major / sum_of_labels[majority_label-1]
+        # cluster_indices = np.where(cluster_labels == cluster_label)[0]
+        # true_labels_in_cluster = true_labels[cluster_indices]
+        # label_counts = Counter(true_labels_in_cluster)
+        # majority_label = max(label_counts, key=label_counts.get)
+        # cnt_major = label_counts[majority_label-1]
+        # if sum_of_labels[majority_label-1] == 0:
+        #     continue
+        # recall = cnt_major / sum_of_labels[majority_label-1]
 
-        if precision + recall != 0:
-            f_measure = (2 * precision * recall) / (precision + recall)
+        if precision + recall[cluster_label] != 0:
+            f_measure = (2 * precision * recall[cluster_label]) / (precision + recall[cluster_label])
             f_measure_sum += f_measure
     f_measure_avg = f_measure_sum / len(np.unique(cluster_labels))
     return f_measure_avg
@@ -201,26 +204,76 @@ solution1_eval_data = np.mean(eval_data, axis=1)
 scaler = StandardScaler()
 solution1_train_data_scaled = scaler.fit_transform(solution1_train_data)
 solution1_eval_data_scaled = scaler.fit_transform(solution1_eval_data)
+eps = 4.55555
+min_samples = 5
 
-eps = 2
-min_samples = 1
-# evaluation of solution1 train
+# param_grid = {'eps': np.linspace(1, 5, 10),
+#               'min_samples': range(3, 10)}
+#
+# # Create a list to store the results
+# results = []
+#
+# # Iterate over all combinations of parameter values
+# for params in ParameterGrid(param_grid):
+#     dbscan = DBSCAN(**params, metric='euclidean')
+#     cluster_labels = dbscan.fit_predict(solution1_train_data_scaled)
+#
+#     # Compute silhouette score to evaluate clustering quality
+#     silhouette = silhouette_score(solution1_train_data_scaled, cluster_labels)
+#
+#     # Store the results
+#     results.append({'params': params, 'silhouette': silhouette})
+#
+# # Find the parameter combination with the highest silhouette score
+# best_result = max(results, key=lambda x: x['silhouette'])
+#
+# # Print the best parameter combination and corresponding silhouette score
+# print("Best parameters:", best_result['params'])
+# print("Silhouette score:", best_result['silhouette'])
+
+
+# # evaluation of solution1 train
+# print("Train solution 1")
 # train_cluster_labels = dbscan(solution1_train_data_scaled, eps, min_samples)
-# purity = calculate_purity(train_cluster_labels, train_labels)
-# recall = calculate_recall(train_cluster_labels, train_labels)
-# cond = cond_entropy(train_cluster_labels, train_labels)
-# print("train sol 1\npurity: ", purity, "\nrecall", recall, "\ncond", cond)
-
+# print("Number of Clusters : ", len(np.unique(train_cluster_labels)))
+# purity1 = calculate_purity(train_cluster_labels, train_labels)
+# print("purity1: ", purity1)
+# recall1, _, _ = calculate_recall(train_cluster_labels, train_labels)
+# print("recall1 : ", recall1)
+# F1 = calculate_F_measure(train_cluster_labels, train_labels)
+# print("test f measure1 : ", F1)
+# cond1 = cond_entropy(train_cluster_labels, train_labels)
+# print("Cond Entropy: ", cond1)
+#
 # evaluation data solution1
+print("-----------------------------------------")
+print("Test solution 1")
 test_cluster_labels = dbscan(solution1_eval_data_scaled, eps, min_samples)
-print("NUmber of Clusters : ", len(np.unique(test_cluster_labels)))
-# purity1 = calculate_purity(test_cluster_labels, eval_labels)
-recall1, _ = calculate_recall(test_cluster_labels, eval_labels)
-print("recall : ", recall1)
+print("Number of Clusters : ", len(np.unique(test_cluster_labels)))
+purity1 = calculate_purity(test_cluster_labels, eval_labels)
+print("purity1: ", purity1)
+recall1, _, _ = calculate_recall(test_cluster_labels, eval_labels)
+print("recall1 : ", recall1)
 F1 = calculate_F_measure(test_cluster_labels, eval_labels)
-print("test f measure : ", F1)
-# cond1 = cond_entropy(test_cluster_labels, eval_labels)
-# print("test sol 1\npurity: ", purity1, "\nrecall: ", recall1, "\ncond", cond1)
+print("test f measure1 : ", F1)
+cond1 = cond_entropy(test_cluster_labels, eval_labels)
+print("Cond Entropy: ", cond1)
+
+# built in
+# print("test built in solution 1")
+# dbscan = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean')
+# print("----------- built in -----------------")
+# # Fit and predict clusters
+# clusters = dbscan.fit_predict(solution1_eval_data_scaled)
+# print("NUmber of Clusters : ", len(np.unique(clusters)))
+# purity1 = calculate_purity(clusters, eval_labels)
+# print("purity1: ", purity1)
+# recall1, _, _ = calculate_recall(clusters, eval_labels)
+# print("recall1 : ", recall1)
+# F1 = calculate_F_measure(clusters, eval_labels)
+# print("test f measure1 : ", F1)
+# cond1 = cond_entropy(clusters, eval_labels)
+# print("Cond Entropy: ", cond1)
 
 # # Solution 2 train data
 # solution2_train_data = train_data.reshape(train_data.shape[0], -1)

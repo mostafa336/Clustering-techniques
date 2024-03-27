@@ -6,6 +6,7 @@ import numpy as np
 import scipy.sparse as sp
 import torch
 from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.neighbors import kneighbors_graph
 from sklearn.preprocessing import StandardScaler
@@ -141,51 +142,54 @@ scaler = StandardScaler()
 k_means = KMeans(n_clusters=19)
 
 # solution 1
-solution1_train_data = np.mean(train_data, axis=1)
-solution1_eval_data = np.mean(eval_data, axis=1)
-solution1_train_data_scaled = scaler.fit_transform(solution1_train_data)
-solution1_eval_data_scaled = scaler.fit_transform(solution1_eval_data)
+# solution1_train_data = np.mean(train_data, axis=1)
+# solution1_eval_data = np.mean(eval_data, axis=1)
+# solution1_train_data_scaled = scaler.fit_transform(solution1_train_data)
+# solution1_eval_data_scaled = scaler.fit_transform(solution1_eval_data)
+#
+# # normalized_eigenvectors_train = Normalized_cut(solution1_train_data_scaled, 19)
+# normalized_eigenvectors_test = Normalized_cut(solution1_eval_data_scaled, 19)
+#
+# # clusters_train1 = k_means.fit_predict(normalized_eigenvectors_train)
+# clusters_test1 = k_means.fit_predict(normalized_eigenvectors_test)
+# clusters_test1 += 1
+#
+# # print("precision train: ", calculate_purity(new_clusters_train, train_labels))
+# print("precision test1: ", calculate_purity(clusters_test1, eval_labels))
+#
+# # print("Weighted Average Recall train:", calculate_recall(train_labels, clusters_train1)[0])
+# print("Weighted Average Recall test1:", calculate_recall(eval_labels, clusters_test1)[0])
+#
+# # print("f measure train1: ", calculate_F_measure(clusters_train1, train_labels))
+# print("f measure test1: ", calculate_F_measure(clusters_test1, eval_labels))
+#
+# # print("cond entropy train1: ", cond_entropy(clusters_train1, train_labels))
+# print("cond entropy test1: ", cond_entropy(clusters_test1, eval_labels))
 
-# normalized_eigenvectors_train = Normalized_cut(solution1_train_data_scaled, 19)
-normalized_eigenvectors_test = Normalized_cut(solution1_eval_data_scaled, 19)
-
-# clusters_train1 = k_means.fit_predict(normalized_eigenvectors_train)
-clusters_test1 = k_means.fit_predict(normalized_eigenvectors_test)
-clusters_test1 += 1
-
-# print("precision train: ", calculate_purity(new_clusters_train, train_labels))
-print("precision test1: ", calculate_purity(clusters_test1, eval_labels))
-
-
-# print("Weighted Average Recall train:", calculate_recall(train_labels, clusters_train1)[0])
-print("Weighted Average Recall test1:", calculate_recall(eval_labels, clusters_test1)[0])
-
-# print("f measure train1: ", calculate_F_measure(clusters_train1, train_labels))
-print("f measure test1: ", calculate_F_measure(clusters_test1, eval_labels))
-
-# print("cond entropy train1: ", cond_entropy(clusters_train1, train_labels))
-print("cond entropy test1: ", cond_entropy(clusters_test1, eval_labels))
-# # solution 2
+# solution 2
 # solution2_train_data = train_data.reshape(train_data.shape[0], -1)
 # solution2_train_data_scaled = scaler.fit_transform(solution2_train_data)
 # solution2_test_data = eval_data.reshape(eval_data.shape[0], -1)
 # solution2_test_data_scaled = scaler.fit_transform(solution2_test_data)
 #
-# normlized_eigenvectors_train2 = Normalized_cut(solution2_train_data_scaled, 19)
-# normlized_eigenvectors_test2 = Normalized_cut(solution2_test_data_scaled, 19)
+# normalized_eigenvectors_train2 = Normalized_cut(solution2_train_data_scaled, 19)
+# normalized_eigenvectors_test2 = Normalized_cut(solution2_test_data_scaled, 19)
 #
 # pca = PCA(n_components=100)
 # solution2_data_pca = pca.fit_transform(solution2_train_data_scaled)
 # solution2_test_data_pca = pca.fit_transform(solution2_test_data_scaled)
 #
-# clusters_train2 = k_means.fit_predict(normlized_eigenvectors_train2)
-# clusters_test2 = k_means.fit_predict(normlized_eigenvectors_test2)
+# clusters_train2 = k_means.fit_predict(normalized_eigenvectors_train2)
+# clusters_test2 = k_means.fit_predict(normalized_eigenvectors_test2)
 #
-# new_clusters_train2 = map_clusters_to_labels(clusters_train2, train_labels)
-# new_clusters_test2 = map_clusters_to_labels(clusters_test2, eval_labels)
+# print("precision train2: ", calculate_purity(clusters_train2, train_labels))
+# print("precision test2: ", calculate_purity(clusters_test2, eval_labels))
 #
-# print("precision train2: ", calculate_purity(new_clusters_train2, train_labels))
-# print("precision test2: ", calculate_purity(new_clusters_test2, eval_labels))
+# print("Weighted Average Recall train:", calculate_recall(train_labels, clusters_train2)[0])
+# print("Weighted Average Recall test1:", calculate_recall(eval_labels, clusters_test2)[0])
 #
-# print("Weighted Average Recall train:", calculate_recall(train_labels, clusters_train2))
-# print("Weighted Average Recall test:", calculate_recall(eval_labels, clusters_test2))
+# print("f measure train2: ", calculate_F_measure(clusters_train2, train_labels))
+# print("f measure test2: ", calculate_F_measure(clusters_test2, eval_labels))
+#
+# print("cond entropy train2: ", cond_entropy(clusters_train2, train_labels))
+# print("cond entropy test2: ", cond_entropy(clusters_test2, eval_labels))
