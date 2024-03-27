@@ -26,7 +26,7 @@ def load_data(folder_path):
     return np.array(data), np.array(labels)
 
 
-folder_path = "data"
+
 
 
 # data, labels = load_data(folder_path)
@@ -217,62 +217,67 @@ def assign_to_nearest_centroid(data, centroids):
         clusters[cluster_idx].append(data[i])
     return np.array(labels), clusters
 
+def run():
+    folder_path = "data"
+    # Load data for training and evaluation
+    train_data, train_labels, eval_data, eval_labels = load_data_split(folder_path)
+    scaler = StandardScaler()
 
-# Load data for training and evaluation
-train_data, train_labels, eval_data, eval_labels = load_data_split(folder_path)
-scaler = StandardScaler()
+    # Solution 1: Taking the mean of each column in each segment
+    solution1_train_data = np.mean(train_data, axis=1)
+    # print("Solution 1 train data shape:", solution1_train_data.shape)
 
-# Solution 1: Taking the mean of each column in each segment
-solution1_train_data = np.mean(train_data, axis=1)
-# print("Solution 1 train data shape:", solution1_train_data.shape)
+    solution1_eval_data = np.mean(eval_data, axis=1)
+    # print("Solution 1 eval data shape:", solution1_eval_data.shape)
 
-solution1_eval_data = np.mean(eval_data, axis=1)
-# print("Solution 1 eval data shape:", solution1_eval_data.shape)
+    # Solution 2: Flattening all the features together
+    # Reshape the training data for Solution 2
+    # solution2_train_data = train_data.reshape(train_data.shape[0], -1)
+    # print("Solution 2 train data shape:", solution2_train_data.shape)
+    #
+    # solution2_eval_data = eval_data.reshape(eval_data.shape[0], -1)
+    # print("Solution 2 eval data shape:", solution2_eval_data.shape)
 
-# Solution 2: Flattening all the features together
-# Reshape the training data for Solution 2
-# solution2_train_data = train_data.reshape(train_data.shape[0], -1)
-# print("Solution 2 train data shape:", solution2_train_data.shape)
-#
-# solution2_eval_data = eval_data.reshape(eval_data.shape[0], -1)
-# print("Solution 2 eval data shape:", solution2_eval_data.shape)
+    solution1_train_data_scaled = scaler.fit_transform(solution1_train_data)
+    # print("Solution 1 train data scaled shape:", solution1_train_data_scaled.shape)
+    # solution2_train_data_scaled = scaler.fit_transform(solution2_train_data)
+    # print("Solution 2 train data scaled shape:", solution2_train_data_scaled.shape)
+    solution1_eval_data_scaled = scaler.fit_transform(solution1_eval_data)
+    # print("Solution 1 eval data scaled shape:", solution1_eval_data_scaled.shape)
 
-solution1_train_data_scaled = scaler.fit_transform(solution1_train_data)
-# print("Solution 1 train data scaled shape:", solution1_train_data_scaled.shape)
-# solution2_train_data_scaled = scaler.fit_transform(solution2_train_data)
-# print("Solution 2 train data scaled shape:", solution2_train_data_scaled.shape)
-solution1_eval_data_scaled = scaler.fit_transform(solution1_eval_data)
-# print("Solution 1 eval data scaled shape:", solution1_eval_data_scaled.shape)
+    solution1_ground_truth = extract_ground_truth(solution1_eval_data_scaled)
+    # print("Ground truth shape:", len(solution1_ground_truth), solution1_ground_truth[0].shape)
+    # solution2_eval_data_scaled = scaler.fit_transform(solution2_eval_data)
+    # print("Solution 2 eval data scaled shape:", solution2_eval_data_scaled.shape)
 
-solution1_ground_truth = extract_ground_truth(solution1_eval_data_scaled)
-# print("Ground truth shape:", len(solution1_ground_truth), solution1_ground_truth[0].shape)
-# solution2_eval_data_scaled = scaler.fit_transform(solution2_eval_data)
-# print("Solution 2 eval data scaled shape:", solution2_eval_data_scaled.shape)
-
-# Dimensionality reduction for Solution 2 using PCA
-# pca = PCA(n_components=100)
-# solution2_train_data_pca = pca.fit_transform(solution2_train_data_scaled)
-# print("Solution 2 train data PCA shape:", solution2_train_data_pca.shape)
-# solution2_eval_data_pca = pca.transform(solution2_eval_data_scaled)
-# print("Solution 2 eval data PCA shape:", solution2_eval_data_pca.shape)
-
-
-# K-means clustering
-# Function to calculate Euclidean distance
+    # Dimensionality reduction for Solution 2 using PCA
+    # pca = PCA(n_components=100)
+    # solution2_train_data_pca = pca.fit_transform(solution2_train_data_scaled)
+    # print("Solution 2 train data PCA shape:", solution2_train_data_pca.shape)
+    # solution2_eval_data_pca = pca.transform(solution2_eval_data_scaled)
+    # print("Solution 2 eval data PCA shape:", solution2_eval_data_pca.shape)
 
 
-# K-means clustering for Solution 1
-k = 19
-centroids, clusters2 = kmeans(solution1_train_data_scaled, k)
-# print("Centroids shape:", centroids.shape)
-# print("Clusters shape:", len(clusters2))
-# print("Clusters:", clusters2)
-# print("Centroids:", centroids)
-predicted_labels, clusters = assign_to_nearest_centroid(solution1_eval_data_scaled, centroids)
-# print("Predicted labels shape:", predicted_labels.shape)
-# print("Predicted labels:", predicted_labels)
+    # K-means clustering
+    # Function to calculate Euclidean distance
 
-# Calculate purityy
-calculate_purity(clusters, solution1_ground_truth)
-calculate_F_measure(clusters, solution1_ground_truth)
-calculate_entropy(clusters, solution1_ground_truth)
+
+    # K-means clustering for Solution 1
+    k = 19
+    centroids, clusters2 = kmeans(solution1_train_data_scaled, k)
+    # print("Centroids shape:", centroids.shape)
+    # print("Clusters shape:", len(clusters2))
+    # print("Clusters:", clusters2)
+    # print("Centroids:", centroids)
+    predicted_labels, clusters = assign_to_nearest_centroid(solution1_eval_data_scaled, centroids)
+    # print("Predicted labels shape:", predicted_labels.shape)
+    # print("Predicted labels:", predicted_labels)
+
+    # Calculate purityy
+    calculate_purity(clusters, solution1_ground_truth)
+    calculate_F_measure(clusters, solution1_ground_truth)
+    calculate_entropy(clusters, solution1_ground_truth)
+
+
+print("ENTER KMEANS")
+run()
