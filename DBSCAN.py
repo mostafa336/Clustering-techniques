@@ -1,14 +1,10 @@
 import math
 import os
-import numpy as np
-from sklearn.cluster import KMeans, DBSCAN, MeanShift, estimate_bandwidth
-from sklearn.decomposition import PCA
-from sklearn.metrics import accuracy_score, adjusted_rand_score, normalized_mutual_info_score, confusion_matrix
-from sklearn.metrics.cluster import contingency_matrix
-from sklearn.preprocessing import StandardScaler
 from collections import Counter
-from sklearn.metrics import silhouette_score
-from sklearn.model_selection import ParameterGrid
+
+import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 
 
 def load_data_split(folder_path, segments_per_subject=60, segments_for_training=48):
@@ -65,12 +61,12 @@ def dbscan(data, eps, min_samples):
         else:
             cluster_id += 1
             cluster_labels[i] = cluster_id
-            expand_cluster(data, i, neighbors, cluster_id, eps, min_samples, visited, cluster_labels)
+            expand_cluster(data, neighbors, cluster_id, eps, min_samples, visited, cluster_labels)
 
     return cluster_labels
 
 
-def expand_cluster(data, point_index, neighbors, cluster_id, eps, min_samples, visited, cluster_labels):
+def expand_cluster(data, neighbors, cluster_id, eps, min_samples, visited, cluster_labels):
     for neighbor in neighbors:
         if not visited[neighbor]:
             visited[neighbor] = True
@@ -81,6 +77,7 @@ def expand_cluster(data, point_index, neighbors, cluster_id, eps, min_samples, v
         if cluster_labels[neighbor] == -1:
             cluster_labels[neighbor] = cluster_id
 
+
 def calculate_cluster_purity(cluster_labels, cluster, true_labels):
     cluster_indices = np.where(cluster_labels == cluster)[0]
     true_labels_in_cluster = true_labels[cluster_indices]
@@ -88,6 +85,7 @@ def calculate_cluster_purity(cluster_labels, cluster, true_labels):
     label_counts = Counter(true_labels_in_cluster)
     majority_label_count = max(label_counts.values())
     return majority_label_count
+
 
 def calculate_purity(cluster_labels, true_labels):
     clusters = np.unique(cluster_labels)
@@ -158,12 +156,15 @@ def calculate_recall(cluster_labels, true_labels):
         true_labels_in_cluster = true_labels[cluster_indices]
         label_counts = Counter(true_labels_in_cluster)
         for label in label_counts:
-            total_true_positive += label_counts[label] * (label_counts[label] -1)
+            total_true_positive += (label_counts[label] * (label_counts[label] -1)) / 2
 
         if len(label_counts) > 0:
             majority_label = max(label_counts, key=label_counts.get)
             recall_per_cluster[cluster] = label_counts[majority_label]
-            recall_per_cluster[cluster] = recall_per_cluster[cluster] / 96
+            if sum_of_labels[int(majority_label) - 1] == 0:
+                recall_per_cluster[cluster] = 0
+                continue
+            recall_per_cluster[cluster] = recall_per_cluster[cluster] / sum_of_labels[int(majority_label) - 1]
 
     recall = total_true_positive / (total_true_positive + total_false_negative)
 
@@ -177,18 +178,7 @@ def calculate_F_measure(cluster_labels, true_labels):
     print("sum of labels: ", sum_of_labels)
     print("sum ", np.sum(sum_of_labels))
     for i, cluster_label in enumerate(np.unique(cluster_labels)):
-        # precision
         precision = calculate_cluster_purity(cluster_labels, cluster_label, true_labels)
-        # recall
-        # cluster_indices = np.where(cluster_labels == cluster_label)[0]
-        # true_labels_in_cluster = true_labels[cluster_indices]
-        # label_counts = Counter(true_labels_in_cluster)
-        # majority_label = max(label_counts, key=label_counts.get)
-        # cnt_major = label_counts[majority_label-1]
-        # if sum_of_labels[majority_label-1] == 0:
-        #     continue
-        # recall = cnt_major / sum_of_labels[majority_label-1]
-
         if precision + recall[cluster_label] != 0:
             f_measure = (2 * precision * recall[cluster_label]) / (precision + recall[cluster_label])
             f_measure_sum += f_measure
@@ -198,54 +188,41 @@ def calculate_F_measure(cluster_labels, true_labels):
 
 folder_path = "data"
 train_data, train_labels, eval_data, eval_labels = load_data_split(folder_path)
+scaler = StandardScaler()
+eps = 3
+min_samples = 3
+
 # solution 1
 solution1_train_data = np.mean(train_data, axis=1)
 solution1_eval_data = np.mean(eval_data, axis=1)
-scaler = StandardScaler()
 solution1_train_data_scaled = scaler.fit_transform(solution1_train_data)
 solution1_eval_data_scaled = scaler.fit_transform(solution1_eval_data)
-eps = 4.55555
-min_samples = 5
 
-# param_grid = {'eps': np.linspace(1, 5, 10),
-#               'min_samples': range(3, 10)}
-#
-# # Create a list to store the results
-# results = []
-#
-# # Iterate over all combinations of parameter values
-# for params in ParameterGrid(param_grid):
-#     dbscan = DBSCAN(**params, metric='euclidean')
-#     cluster_labels = dbscan.fit_predict(solution1_train_data_scaled)
-#
-#     # Compute silhouette score to evaluate clustering quality
-#     silhouette = silhouette_score(solution1_train_data_scaled, cluster_labels)
-#
-#     # Store the results
-#     results.append({'params': params, 'silhouette': silhouette})
-#
-# # Find the parameter combination with the highest silhouette score
-# best_result = max(results, key=lambda x: x['silhouette'])
-#
-# # Print the best parameter combination and corresponding silhouette score
-# print("Best parameters:", best_result['params'])
-# print("Silhouette score:", best_result['silhouette'])
-
-
+# tune parameters
+# epss = [4, 5]
+# min_sampless = [1, 2, 3, 4, 5, 6, 7, 8]
 # # evaluation of solution1 train
 # print("Train solution 1")
+# for eps in epss:
+#     for min_samples in min_sampless:
+#         train_cluster_labels = dbscan(solution1_train_data_scaled, eps, min_samples)
+#         F1 = calculate_F_measure(train_cluster_labels, train_labels)
+#         print("test f measure1 : ", F1, " eps ", eps, " n samples ", min_samples)
+
 # train_cluster_labels = dbscan(solution1_train_data_scaled, eps, min_samples)
 # print("Number of Clusters : ", len(np.unique(train_cluster_labels)))
 # purity1 = calculate_purity(train_cluster_labels, train_labels)
 # print("purity1: ", purity1)
 # recall1, _, _ = calculate_recall(train_cluster_labels, train_labels)
 # print("recall1 : ", recall1)
+#
 # F1 = calculate_F_measure(train_cluster_labels, train_labels)
 # print("test f measure1 : ", F1)
+#
 # cond1 = cond_entropy(train_cluster_labels, train_labels)
 # print("Cond Entropy: ", cond1)
-#
-# evaluation data solution1
+
+# # evaluation data solution1
 print("-----------------------------------------")
 print("Test solution 1")
 test_cluster_labels = dbscan(solution1_eval_data_scaled, eps, min_samples)
@@ -277,15 +254,38 @@ print("Cond Entropy: ", cond1)
 
 # # Solution 2 train data
 # solution2_train_data = train_data.reshape(train_data.shape[0], -1)
-# solution2_data_scaled = scaler.fit_transform(solution2_train_data)
+# solution2_train_scaled = scaler.fit_transform(solution2_train_data)
 # pca = PCA(n_components=100)
-# solution2_data_pca = pca.fit_transform(solution2_data_scaled)
+# solution2_data_pca = pca.fit_transform(solution2_train_scaled)
+#
+# print("-----------------------------------------")
+# print("train solution 2")
 # train2_cluster_labels = dbscan(solution2_data_pca, eps, min_samples)
-
-
+# print("Number of Clusters : ", len(np.unique(train2_cluster_labels)))
+# purity2 = calculate_purity(train2_cluster_labels, train_labels)
+# print("purity2: ", purity2)
+# recall2, _, _ = calculate_recall(train2_cluster_labels, train_labels)
+# print("recall2 : ", recall2)
+# F1 = calculate_F_measure(train2_cluster_labels, train_labels)
+# print("test f measure2 : ", F1)
+# cond2 = cond_entropy(train2_cluster_labels, train_labels)
+# print("Cond Entropy2: ", cond2)
+#
 # # solution 2 test data
 # solution2_test_data = eval_data.reshape(eval_data.shape[0], -1)
 # solution2_test_data_scaled = scaler.fit_transform(solution2_test_data)
 # pca = PCA(n_components=100)
 # solution2_test_data_pca = pca.fit_transform(solution2_test_data_scaled)
+#
+# print("-----------------------------------------")
+# print("Test solution 2")
 # test2_cluster_labels = dbscan(solution2_test_data_pca, eps, min_samples)
+# print("Number of Clusters : ", len(np.unique(test2_cluster_labels)))
+# purity2 = calculate_purity(test2_cluster_labels, eval_labels)
+# print("purity2: ", purity2)
+# recall2, _, _ = calculate_recall(test2_cluster_labels, eval_labels)
+# print("recall2 : ", recall2)
+# F1 = calculate_F_measure(test2_cluster_labels, eval_labels)
+# print("test f measure2 : ", F1)
+# cond2 = cond_entropy(test2_cluster_labels, eval_labels)
+# print("Cond Entropy2: ", cond2)

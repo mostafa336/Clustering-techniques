@@ -5,8 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bac9061b-8eac-47e0-8ccf-6994b920fc5f" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/Clustering-techniques.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Clustering-techniques.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DBSCAN.py" beforeDir="false" afterPath="$PROJECT_DIR$/DBSCAN.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Normalized_cut.py" beforeDir="false" afterPath="$PROJECT_DIR$/Normalized_cut.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
